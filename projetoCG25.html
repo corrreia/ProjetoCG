@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=windows-1252">
+    <script src="../twgl.js-master/dist/4.x/twgl-full.js"></script>
+</head>
+
+<body>
+    <doctype html="">
+    <!--Trabalho realizado por:
+        Tomás Correia fc56372   
+        Miguel Pato fc57102
+        João Figueiredo fc53524
+     -->
+    <title>SOLAR SYSTEM</title>
+    <link rel="stylesheet" type="text/css" href="style.css" media="screen" />
+    <html>
+        <canvas id="canvas"></canvas>
+        <div class="overcnv" id="fps">FPS</div>
+        <div class="overcnv" id="camera">Camera</div>
+    </html>
+
+    <!-- Related to lighs and shaders -->
+    <script id="vs" type="notjs">  
+        uniform mat4 u_worldViewProjection;
+        uniform mat4 u_world;
+        uniform vec3 u_lightWorldPosition; // Posicao da Luz
+        uniform mat4 u_viewInverse;
+        uniform mat4 u_worldInverseTranspose;
+
+        attribute vec4 clr;
+        attribute vec4 position;
+        attribute vec3 normal;
+        attribute vec2 texcoord;
+
+        varying vec4 vcolor;
+        varying vec3 v_normal;
+        varying vec2 v_texCoord;
+        varying vec3 v_surfaceToLight;
+        varying vec3 v_surfaceToView;
+
+
+
+        void main() {
+
+            vcolor = clr;
+            v_texCoord = texcoord;
+            vec3 surfaceWorldPosition = (u_world * position).xyz;            // Compute the world position of the surface
+            v_normal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;      // orient the normals and pass to the fragment shader
+            v_surfaceToLight = u_lightWorldPosition - surfaceWorldPosition;  // Compute every position on the surface to a point
+            v_surfaceToView = (u_viewInverse[3] - (u_world * position)).xyz;
+            gl_Position = u_worldViewProjection * position;
+        }
+    </script>
+
+    <script id="fs" type="notjs">
+        precision mediump float;
+
+        varying vec4 vcolor;
+        varying vec3 v_normal;
+        varying vec2 v_texCoord;
+        varying vec3 v_surfaceToLight;
+        varying vec3 v_surfaceToView;
+
+
+        uniform sampler2D u_texture;
+        uniform vec4 u_lightColor;
+        uniform vec4 u_ambient;                    // Luz Ambiente
+        uniform vec4 u_specular;                   // Luz Specular
+        uniform float u_shininess;
+        uniform float u_specularFactor;
+
+        vec4 lit(float l ,float h, float m) {
+            return vec4(1.0,
+                        max(l, 0.0),
+                        (l > 0.0) ? pow(max(0.0, h), m) : 0.0,
+                        1.0);
+        }
+
+        void main() {
+            gl_FragColor = vcolor;
+            vec4 diffuseClr = texture2D(u_texture, v_texCoord);
+            vec3 a_normal = normalize(v_normal);
+
+            vec3 surfaceToLight = normalize(v_surfaceToLight);
+            vec3 surfaceToView = normalize(v_surfaceToView);
+            vec3 halfVector = normalize(surfaceToLight + surfaceToView);
+            vec4 litR = lit(dot(a_normal, surfaceToLight), dot(a_normal, halfVector), u_shininess);
+            vec4 final = vec4((
+            u_lightColor * (diffuseClr * litR.y + diffuseClr * u_ambient + u_specular * litR.z * u_specularFactor)).rgb,
+                    diffuseClr.a);
+            vec4 luzA = 0.2*vec4(1.0, 0.0, 0.0, 1.0);
+            gl_FragColor = luzA + 0.8*diffuseClr;
+            gl_FragColor = final;
+
+        }
+
+    </script>
+    <script src="script.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,24 @@
+body {
+	margin: 0;
+	font-family: monospace;
+}
+canvas {
+	display: block;
+	width: 100vw;
+	height: 100vh;
+}
+#fps {
+	position: absolute;
+	top: 0;
+	left: 0;
+	color: white;
+	padding: 5px;
+}
+
+#camera {
+	position: absolute;
+	top: 20px;
+	left: 0;
+	color: white;
+	padding: 5px;
+}
